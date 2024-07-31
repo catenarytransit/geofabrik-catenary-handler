@@ -1,0 +1,10 @@
+[package]
+name = "geofabrik-catenary-handler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[[bin]]
+name = "download_osms_and_reduce_to_rail_lines"
+path = "src/dl_and_reduce.rs"

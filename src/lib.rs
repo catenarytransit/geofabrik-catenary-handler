@@ -1,0 +1,25 @@
+pub const SOURCES_TO_DOWNLOAD: [&str;22] = [
+    "europe/france/alsace",
+    "europe/france/aquitaine",
+    "europe/france/auvergne",
+    "europe/france/basse-normandie",
+    "europe/france/bourgogne",
+    "europe/france/bretagne",
+    "europe/france/centre",
+    "europe/france/champagne-ardenne",
+    "europe/france/corse",
+    "europe/france/franche-comte",
+    "europe/france/haute-normandie",
+    "europe/france/ile-de-france",
+    "europe/france/languedoc-roussillon",
+    "europe/france/limousin",
+    "europe/france/lorraine",
+    "europe/france/midi-pyrenees",
+    "europe/france/nord-pas-de-calais",
+    "europe/france/pays-de-la-loire",
+    "europe/france/picardie",
+    "europe/france/poitou-charentes",
+    "europe/france/provence-alpes-cote-d-azur",
+    "europe/france/rhone-alpes"
+];
+
