@@ -1,5 +1,7 @@
 use std::io::Write;
+use geo::{geometry::{MultiPolygon, Polygon}, LineString};
 use std::fs;
+use pest::Parser;
 
 pub const SOURCES_TO_DOWNLOAD: [&str;22] = [
     "europe/france/alsace",
@@ -23,8 +25,9 @@ pub const SOURCES_TO_DOWNLOAD: [&str;22] = [
     "europe/france/picardie",
     "europe/france/poitou-charentes",
     "europe/france/provence-alpes-cote-d-azur",
-    "europe/france/rhone-alpes"
+    "europe/france/rhone-alpes",
 ];
+
 
 pub async fn download_and_filter_all(temp_pbf_path: &str, poly_folder_path: &str, filtered_folder_path: &str) {
 
@@ -52,9 +55,73 @@ pub async fn download_and_filter_all(temp_pbf_path: &str, poly_folder_path: &str
         let mut new_elements: Vec<osmpbf::Element> = vec![];
 
         let filtered_elements = read_elements.for_each(|element| {
-            let drop =
+            let drop = false;
 
         });
 
+    }
+}
+
+
+#[macro_use]
+extern crate pest_derive;
+
+#[derive(Parser)]
+#[grammar = "poly_format.pest"]
+pub struct PolyParser;
+
+fn poly_parser(path: &str) -> Result<MultiPolygon, Box<dyn std::error::Error>> {
+    
+    let input = fs::read_to_string(path)?;
+
+    let file = PolyParser::parse(Rule::file, &input).expect("failed parse").next().unwrap();
+
+    let mut result_polygon: Vec<Polygon> = vec![];
+
+    for file_pair in file.into_inner() {
+        let mut nodes = Vec::new();
+        match file_pair.as_rule() {
+            Rule::shape => {
+                for shape_pair in file_pair.into_inner() {
+                    match shape_pair.as_rule() {
+                        Rule::point => {
+                            let mut x: f64 = 0.0;
+                            let mut y: f64 = 0.0;
+                            for ordered_pair in shape_pair.into_inner() {
+                                match ordered_pair.as_rule() {
+                                    Rule::x => {
+                                        x = ordered_pair.as_str().parse().unwrap()
+                                    },
+                                    Rule::y => {
+                                        y = ordered_pair.as_str().parse().unwrap()
+                                    },
+                                    _ => unreachable!(),
+                                }
+                            }
+                            nodes.push((x,y));
+                        }
+                        _ => (),
+                    }
+                }
+            }
+            _ => (),
+        }
+        let polygon = Polygon::new(LineString::from(nodes), vec![]);
+        result_polygon.push(polygon);
+    }
+
+    Ok(MultiPolygon::new(result_polygon))
+
+
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::poly_parser;
+
+    #[test]
+    fn and_find_out() {
+        let x = poly_parser("C:\\Users\\bookw\\Downloads\\aus.poly");
+        println!("aaa{:?}", x)
     }
 }
