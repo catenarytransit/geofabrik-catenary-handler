@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+geo = "0.28.0"
+geojson = "0.24.1"
+pest = "2.7.11"
+pest_derive = "2.7.11"
+
 
 [[bin]]
 name = "download_osms_and_reduce_to_rail_lines"
