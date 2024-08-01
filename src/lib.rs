@@ -23,7 +23,6 @@ pub const SOURCES_TO_DOWNLOAD: [&str;22] = [
     "europe/france/rhone-alpes",
 ];
 
-use geojson;
 use geo::{geometry::{MultiPolygon, Polygon}, LineString};
 use std::fs;
 use pest::Parser;
