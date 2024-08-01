@@ -11,6 +11,9 @@ geo = "0.28.0"
 geojson = "0.24.1"
 pest = "2.7.11"
 pest_derive = "2.7.11"
+osmpbfreader = "0.16.1"
+flat_map = "0.0.10"
+smartstring = "1.0.1"
 
 
 [[bin]]

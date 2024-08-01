@@ -1,9 +1,15 @@
-use std::io::Write;
-use geo::{geometry::{MultiPolygon, Polygon}, LineString};
-use std::fs;
+use geo::{
+    geometry::{MultiPolygon, Polygon},
+    LineString,
+};
+use osmpbf::Element;
+use osmpbfreader::{OsmObj, Tags};
 use pest::Parser;
+use std::fs;
+use std::io::Write;
+use std::iter::FlatMap;
 
-pub const SOURCES_TO_DOWNLOAD: [&str;22] = [
+pub const SOURCES_TO_DOWNLOAD: [&str; 22] = [
     "europe/france/alsace",
     "europe/france/aquitaine",
     "europe/france/auvergne",
@@ -28,9 +34,11 @@ pub const SOURCES_TO_DOWNLOAD: [&str;22] = [
     "europe/france/rhone-alpes",
 ];
 
-
-pub async fn download_and_filter_all(temp_pbf_path: &str, poly_folder_path: &str, filtered_folder_path: &str) {
-
+pub async fn download_and_filter_all(
+    temp_pbf_path: &str,
+    poly_folder_path: &str,
+    filtered_folder_path: &str,
+) {
     fs::create_dir_all(temp_pbf_path).unwrap();
     fs::create_dir_all(poly_folder_path).unwrap();
     fs::create_dir_all(filtered_folder_path).unwrap();
@@ -38,7 +46,8 @@ pub async fn download_and_filter_all(temp_pbf_path: &str, poly_folder_path: &str
     let client = reqwest::Client::new();
 
     for source in SOURCES_TO_DOWNLOAD {
-        let request_url = format!("https://download.geofabrik.de/europe/france/{source}-latest.osm.pbf");
+        let request_url =
+            format!("https://download.geofabrik.de/europe/france/{source}-latest.osm.pbf");
         let poly_url = format!("https://download.geofabrik.de/europe/{source}.poly");
 
         let request_pbf = client.get(&request_url).build().unwrap();
@@ -48,21 +57,93 @@ pub async fn download_and_filter_all(temp_pbf_path: &str, poly_folder_path: &str
 
         let bytes_from_response_pbf = response_pbf.bytes().await.unwrap();
 
-        println!("Downloaded {} pbf, {:.2} MB", source, bytes_from_response_pbf.as_ref().len() / 1_000_000);
+        println!(
+            "Downloaded {} pbf, {:.2} MB",
+            source,
+            bytes_from_response_pbf.as_ref().len() / 1_000_000
+        );
 
-        let read_elements = osmpbf::reader::ElementReader::new(bytes_from_response_pbf.as_ref());
+        let mut read_elements = osmpbfreader::OsmPbfReader::new(bytes_from_response_pbf.as_ref());
 
-        let mut new_elements: Vec<osmpbf::Element> = vec![];
+        let new_elements = read_elements.iter().map(|element| match element {
+            Ok(element) => {
+                let flat_map = element.tags().clone().into_inner();
 
-        let filtered_elements = read_elements.for_each(|element| {
-            let drop = false;
+                match include_tag_rail_and_metro(&flat_map) {
+                    true => Some(element),
+                    false => None
+                }
+            }
+            Err(_) => None
+        }).flatten().collect::<Vec<OsmObj>>();
 
-        });
-
+        drop(read_elements);
+        drop(bytes_from_response_pbf);
     }
 }
 
+//Filters tags based on the criteria in Patrick Brosi, PhD's Pfaedle config system
+pub fn include_tag_rail_and_metro(tags: &flat_map::FlatMap< smartstring::alias::String, smartstring::alias::String>) -> bool {
+    let mut include = false;
 
+    if let Some(railway) = tags.get("railway") {
+        if matches!(
+            railway.as_str(),
+            "rail" | "light_rail" | "tram" | "narrow_gauge" | "train" | "subway" | "funicular" | "station" | "halt" | "tram_stop" | "railway_crossing" | "stop" | "subway_stop"
+        ) {
+            include = true;
+        }
+    }
+
+    if let Some(route) = tags.get("route") {
+        if matches!(
+            route.as_str(),
+            "rail" | "light_rail" | "tram" | "narrow_gauge" | "train" | "funicular" | "subway"
+        ) {
+            include = true;
+        }
+    }
+
+    if let Some(route) = tags.get("public_transport") {
+        if matches!(
+            route.as_str(),
+            "rail" | "light_rail" | "tram" | "narrow_gauge" | "train" | "funicular" | "subway" | "stop_area" | "platform" 
+        ) {
+            include = true;
+        }
+    }
+
+    if let Some(route) = tags.get("subway") {
+        if matches!(
+            route.as_str(),
+            "yes"
+        ) {
+            include = true;
+        }
+    }
+
+    if let Some(route) = tags.get("tram") {
+        if matches!(
+            route.as_str(),
+            "yes"
+        ) {
+            include = true;
+        }
+    }
+
+    if let Some(route) = tags.get("metro") {
+        if matches!(
+            route.as_str(),
+            "yes"
+        ) {
+            include = true;
+        }
+    }
+
+    include
+}
+
+//custom deserialisation library
 #[macro_use]
 extern crate pest_derive;
 
@@ -70,11 +151,15 @@ extern crate pest_derive;
 #[grammar = "poly_format.pest"]
 pub struct PolyParser;
 
+//converts .poly files found on https://download.geofabrik.de/ used for Osmosis filtering into MultiPolygons
+
 fn poly_parser(path: &str) -> Result<MultiPolygon, Box<dyn std::error::Error>> {
-    
     let input = fs::read_to_string(path)?;
 
-    let file = PolyParser::parse(Rule::file, &input).expect("failed parse").next().unwrap();
+    let file = PolyParser::parse(Rule::file, &input)
+        .expect("failed parse")
+        .next()
+        .unwrap();
 
     let mut result_polygon: Vec<Polygon> = vec![];
 
@@ -89,16 +174,12 @@ fn poly_parser(path: &str) -> Result<MultiPolygon, Box<dyn std::error::Error>> {
                             let mut y: f64 = 0.0;
                             for ordered_pair in shape_pair.into_inner() {
                                 match ordered_pair.as_rule() {
-                                    Rule::x => {
-                                        x = ordered_pair.as_str().parse().unwrap()
-                                    },
-                                    Rule::y => {
-                                        y = ordered_pair.as_str().parse().unwrap()
-                                    },
+                                    Rule::x => x = ordered_pair.as_str().parse().unwrap(),
+                                    Rule::y => y = ordered_pair.as_str().parse().unwrap(),
                                     _ => unreachable!(),
                                 }
                             }
-                            nodes.push((x,y));
+                            nodes.push((x, y));
                         }
                         _ => (),
                     }
@@ -111,8 +192,6 @@ fn poly_parser(path: &str) -> Result<MultiPolygon, Box<dyn std::error::Error>> {
     }
 
     Ok(MultiPolygon::new(result_polygon))
-
-
 }
 
 #[cfg(test)]
@@ -121,7 +200,7 @@ mod tests {
 
     #[test]
     fn and_find_out() {
-        let x = poly_parser("C:\\Users\\bookw\\Downloads\\aus.poly");
+        let x = poly_parser("./france.poly");
         println!("aaa{:?}", x)
     }
 }

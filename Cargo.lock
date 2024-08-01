@@ -270,6 +270,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9fc0510504f03c51ada170672ac806f1f105a88aa97a5281117e1ddc3368e51a"
 
 [[package]]
+name = "flat_map"
+version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4fa2a56a33c493fc81acbad4676c599cf2b128f21462a020043ea1eee46244f"
+dependencies = [
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
 name = "flate2"
 version = "1.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -316,6 +326,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "futures"
+version = "0.1.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a471a38ef8ed83cd6e40aa59c1ffe17db6855c18e3604d9c4ed8c08ebc28678"
+
+[[package]]
 name = "futures-channel"
 version = "0.3.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -329,6 +345,16 @@ name = "futures-core"
 version = "0.3.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfc6580bb841c5a68e9ef15c77ccc837b40a7504914d52e47b8b0e9bbda25a1d"
+
+[[package]]
+name = "futures-cpupool"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab90cde24b3319636588d0c35fe03b1333857621051837ed769faefb4c2162e4"
+dependencies = [
+ "futures",
+ "num_cpus",
+]
 
 [[package]]
 name = "futures-sink"
@@ -397,12 +423,15 @@ dependencies = [
 name = "geofabrik-catenary-handler"
 version = "0.1.0"
 dependencies = [
+ "flat_map",
  "geo",
  "geojson",
  "osmpbf",
+ "osmpbfreader",
  "pest",
  "pest_derive",
  "reqwest",
+ "smartstring",
  "tokio",
 ]
 
@@ -775,6 +804,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_cpus"
+version = "1.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4161fcb6d602d4d2081af7c3a45852d875a03dd337a6bfdd6e06407b61342a43"
+dependencies = [
+ "hermit-abi",
+ "libc",
+]
+
+[[package]]
 name = "object"
 version = "0.36.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -842,9 +881,39 @@ dependencies = [
  "byteorder",
  "flate2",
  "memmap2",
- "protobuf",
- "protobuf-codegen",
+ "protobuf 3.5.0",
+ "protobuf-codegen 3.5.0",
  "rayon",
+]
+
+[[package]]
+name = "osmpbfreader"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31a9a5652ee5d1ac97f64960117f9165d2d185034c5ccf22f6fadd3fcb78ccb2"
+dependencies = [
+ "byteorder",
+ "flat_map",
+ "flate2",
+ "par-map",
+ "protobuf 2.28.0",
+ "protobuf-codegen-pure",
+ "pub-iterator-type",
+ "self_cell",
+ "serde",
+ "smartstring",
+]
+
+[[package]]
+name = "par-map"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f05b290991702bb8140cf70915b82b0ae1ec7fe478db97305af990048040095"
+dependencies = [
+ "futures",
+ "futures-cpupool",
+ "num_cpus",
+ "pub-iterator-type",
 ]
 
 [[package]]
@@ -970,6 +1039,12 @@ dependencies = [
 
 [[package]]
 name = "protobuf"
+version = "2.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "106dd99e98437432fed6519dedecfade6a06a73bb7b2a1e019fdd2bee5778d94"
+
+[[package]]
+name = "protobuf"
 version = "3.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df67496db1a89596beaced1579212e9b7c53c22dca1d9745de00ead76573d514"
@@ -981,17 +1056,36 @@ dependencies = [
 
 [[package]]
 name = "protobuf-codegen"
+version = "2.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "033460afb75cf755fcfc16dfaed20b86468082a2ea24e05ac35ab4a099a017d6"
+dependencies = [
+ "protobuf 2.28.0",
+]
+
+[[package]]
+name = "protobuf-codegen"
 version = "3.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eab09155fad2d39333d3796f67845d43e29b266eea74f7bc93f153f707f126dc"
 dependencies = [
  "anyhow",
  "once_cell",
- "protobuf",
+ "protobuf 3.5.0",
  "protobuf-parse",
  "regex",
  "tempfile",
  "thiserror",
+]
+
+[[package]]
+name = "protobuf-codegen-pure"
+version = "2.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95a29399fc94bcd3eeaa951c715f7bea69409b2445356b00519740bcd6ddd865"
+dependencies = [
+ "protobuf 2.28.0",
+ "protobuf-codegen 2.28.0",
 ]
 
 [[package]]
@@ -1003,7 +1097,7 @@ dependencies = [
  "anyhow",
  "indexmap",
  "log",
- "protobuf",
+ "protobuf 3.5.0",
  "protobuf-support",
  "tempfile",
  "thiserror",
@@ -1018,6 +1112,12 @@ checksum = "70e2d30ab1878b2e72d1e2fc23ff5517799c9929e2cf81a8516f9f4dcf2b9cf3"
 dependencies = [
  "thiserror",
 ]
+
+[[package]]
+name = "pub-iterator-type"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "858afdbecdce657c6e32031348cf7326da7700c869c368a136d31565972f7018"
 
 [[package]]
 name = "quote"
@@ -1265,6 +1365,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "self_cell"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d369a96f978623eb3dc28807c4852d6cc617fed53da5d3c400feff1ef34a714a"
+
+[[package]]
 name = "serde"
 version = "1.0.204"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1344,6 +1450,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
+name = "smartstring"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3fb72c633efbaa2dd666986505016c32c3044395ceaf881518399d2f4127ee29"
+dependencies = [
+ "autocfg",
+ "serde",
+ "static_assertions",
+ "version_check",
+]
+
+[[package]]
 name = "socket2"
 version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1376,6 +1494,12 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
+name = "static_assertions"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "subtle"
