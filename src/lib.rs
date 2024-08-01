@@ -65,17 +65,21 @@ pub async fn download_and_filter_all(
 
         let mut read_elements = osmpbfreader::OsmPbfReader::new(bytes_from_response_pbf.as_ref());
 
-        let new_elements = read_elements.iter().map(|element| match element {
-            Ok(element) => {
-                let flat_map = element.tags().clone().into_inner();
+        let new_elements = read_elements
+            .iter()
+            .map(|element| match element {
+                Ok(element) => {
+                    let flat_map = element.tags().clone().into_inner();
 
-                match include_tag_rail_and_metro(&flat_map) {
-                    true => Some(element),
-                    false => None
+                    match include_tag_rail_and_metro(&flat_map) {
+                        true => Some(element),
+                        false => None,
+                    }
                 }
-            }
-            Err(_) => None
-        }).flatten().collect::<Vec<OsmObj>>();
+                Err(_) => None,
+            })
+            .flatten()
+            .collect::<Vec<OsmObj>>();
 
         drop(read_elements);
         drop(bytes_from_response_pbf);
@@ -83,13 +87,27 @@ pub async fn download_and_filter_all(
 }
 
 //Filters tags based on the criteria in Patrick Brosi, PhD's Pfaedle config system
-pub fn include_tag_rail_and_metro(tags: &flat_map::FlatMap< smartstring::alias::String, smartstring::alias::String>) -> bool {
+pub fn include_tag_rail_and_metro(
+    tags: &flat_map::FlatMap<smartstring::alias::String, smartstring::alias::String>,
+) -> bool {
     let mut include = false;
 
     if let Some(railway) = tags.get("railway") {
         if matches!(
             railway.as_str(),
-            "rail" | "light_rail" | "tram" | "narrow_gauge" | "train" | "subway" | "funicular" | "station" | "halt" | "tram_stop" | "railway_crossing" | "stop" | "subway_stop"
+            "rail"
+                | "light_rail"
+                | "tram"
+                | "narrow_gauge"
+                | "train"
+                | "subway"
+                | "funicular"
+                | "station"
+                | "halt"
+                | "tram_stop"
+                | "railway_crossing"
+                | "stop"
+                | "subway_stop"
         ) {
             include = true;
         }
@@ -107,35 +125,35 @@ pub fn include_tag_rail_and_metro(tags: &flat_map::FlatMap< smartstring::alias::
     if let Some(route) = tags.get("public_transport") {
         if matches!(
             route.as_str(),
-            "rail" | "light_rail" | "tram" | "narrow_gauge" | "train" | "funicular" | "subway" | "stop_area" | "platform" 
+            "rail"
+                | "light_rail"
+                | "tram"
+                | "narrow_gauge"
+                | "train"
+                | "funicular"
+                | "subway"
+                | "stop_area"
+                | "platform"
+                | "station"
         ) {
             include = true;
         }
     }
 
     if let Some(route) = tags.get("subway") {
-        if matches!(
-            route.as_str(),
-            "yes"
-        ) {
+        if matches!(route.as_str(), "yes") {
             include = true;
         }
     }
 
     if let Some(route) = tags.get("tram") {
-        if matches!(
-            route.as_str(),
-            "yes"
-        ) {
+        if matches!(route.as_str(), "yes") {
             include = true;
         }
     }
 
     if let Some(route) = tags.get("metro") {
-        if matches!(
-            route.as_str(),
-            "yes"
-        ) {
+        if matches!(route.as_str(), "yes") {
             include = true;
         }
     }
