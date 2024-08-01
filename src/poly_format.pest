@@ -1,0 +1,10 @@
+file = { SOI ~ (shape ~ NEWLINE)* ~ "END" ~ NEWLINE* }
+
+shape = { ((!"\n" ~ ANY)+ ~ NEWLINE)? ~ "!"? ~ (!"\n" ~ ANY)+ ~ NEWLINE ~ (point ~ NEWLINE)* ~ "END" }
+
+point = { (" " | "\t")+? ~ x ~ (" " | "\t")+ ~ y }
+x     = { decimal }
+y     = { decimal }
+
+decimal = _{ sign? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+ ~ ("E" ~ sign ~ ASCII_DIGIT+)?)? }
+sign    = _{ "+" | "-" }
