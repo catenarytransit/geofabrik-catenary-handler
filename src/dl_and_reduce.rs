@@ -1,4 +1,4 @@
-use geofabrik_catenary_handler::{download_and_filter_all, SOURCES_TO_DOWNLOAD};
+use geofabrik_handler::{download_and_filter_all, SOURCES_TO_DOWNLOAD};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
