@@ -172,8 +172,7 @@ pub struct PolyParser;
 //converts .poly files found on https://download.geofabrik.de/ used for Osmosis filtering into MultiPolygons
 
 pub fn poly_parser(input: &str) -> Result<MultiPolygon, Box<dyn std::error::Error + Sync + Send>> {
-    let file = PolyParser::parse(Rule::file, &input)?
-        .next().unwrap();
+    let file = PolyParser::parse(Rule::file, &input)?.next().unwrap();
 
     let mut result_polygon: Vec<Polygon> = vec![];
 
